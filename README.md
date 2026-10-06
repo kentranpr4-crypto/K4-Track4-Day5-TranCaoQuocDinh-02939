@@ -1,100 +1,58 @@
-# K4 · Track 4 · Ngày 5 — Kalman Filter Pilot
+# Kalman Filter Pilot — hoàn thiện lab và lọc UWB 2D
 
-Bài lab 120 phút: từ số đo nhiễu đến một bộ theo dõi hợp nhất LiDAR, radar và camera, viết bằng NumPy. Buổi lab kết thúc bằng nhiệm vụ chẩn đoán cảm biến cho xe tự hành **Lynx-07**. Mỗi học viên nhận một quỹ đạo và một lỗi cảm biến riêng, sinh từ `STUDENT_ID`.
+Project gồm notebook Kalman/hợp nhất cảm biến đã có lời giải và bộ lọc UWB
+chạy theo luồng hoặc từ CSV. Đầu vào UWB hiện là **tọa độ x/y (m), timestamp
+lúc đo (s)**. Chưa có log UWB phần cứng trong repository; kết quả kèm theo là
+mô phỏng, không phải độ chính xác cam kết cho thiết bị thật.
+
+## Chạy ngay
+
+```bash
+python -m pip install -r requirements.txt
+python -m uwb_filter reports/example_uwb.csv --output reports/example_filtered.csv --smooth
+python -m unittest discover -s tests -v
+```
+
+Đổi `reports/example_uwb.csv` thành CSV của bạn với cột `timestamp,x,y` và
+cột tùy chọn `sigma` (độ lệch chuẩn mỗi trục, m). `--sigma 0.3 --q 0.5` là
+mặc định demo; cần hiệu chỉnh bằng log thiết bị. `--smooth` thêm kết quả
+**offline có sử dụng dữ liệu tương lai**; cột x/y luôn là kết quả online.
 
 ## Cấu trúc
 
-| File | Ai dùng | Ghi chú |
-|:--|:--|:--|
-| `Lab/kalman_fusion_lab_STUDENT.ipynb` | Học viên | Notebook phát trên lớp |
-| `Lab/kalman_fusion_lab_SOLUTIONS.ipynb` | Giảng viên | Lời giải bài 5–8. Không phát trước khi lab kết thúc |
-| `Lab/instructor_answer_key.py` | Giảng viên | Sinh đáp án Phần 9 từ danh sách mã số |
-| `Lab/grade_lab.py` | Giảng viên | Chấm tự động hàng loạt file nộp |
-| `Lab/HUONG_DAN_CHAM_DIEM.md` | Giảng viên | Quy trình chấm chi tiết |
+| Đường dẫn | Vai trò |
+|---|---|
+| [Lab/kalman_fusion_lab_STUDENT.ipynb](Lab/kalman_fusion_lab_STUDENT.ipynb) | Lab đã điền bài 5–8, chạy và lưu output; Phần 9 dùng STUDENT_ID 02939 |
+| [uwb_filter/core.py](uwb_filter/core.py) | Kalman, gate, phục hồi, calibration, RTS |
+| [uwb_filter/__main__.py](uwb_filter/__main__.py) | Đọc CSV, xuất kết quả và trạng thái từng mẫu |
+| [scripts/benchmark_uwb.py](scripts/benchmark_uwb.py) | So sánh 5 phương pháp trên 6 kịch bản, 10 seed |
+| [scripts/run_notebook.py](scripts/run_notebook.py) | Chạy toàn bộ cell, lưu số liệu và biểu đồ không cần Jupyter |
+| [tests/test_uwb.py](tests/test_uwb.py) | Kiểm tra độ chính xác, nhân quả, outlier, mất mẫu, phục hồi, covariance |
+| [docs/UWB_DESIGN.md](docs/UWB_DESIGN.md) | Giải thích cấu trúc, lý do chọn, hướng dẫn tinh chỉnh và giới hạn |
+| [reports/RESULTS.md](reports/RESULTS.md) | Kết quả đo mô phỏng và cách tái lập |
 
-**Không phát** `instructor_answer_key.py`, `grade_lab.py`, và `HUONG_DAN_CHAM_DIEM.md` cho học viên.
+## Vì sao chọn cấu trúc này?
 
-## Yêu cầu
+Kalman vị trí–vận tốc giảm rung trong khi vẫn dự đoán chuyển động giữa các
+mẫu. Gate và giảm trọng số ngăn điểm UWB bất thường kéo lệch quỹ đạo. Cơ chế
+phục hồi kiểm tra cả chuỗi mẫu, covariance phản ánh thời gian mất tín hiệu.
+RTS dùng cho xem lại log khi muốn tận dụng toàn bộ dữ liệu để làm mượt.
 
-- Python 3.9+
-- `numpy`, `matplotlib`, `scipy`
-- Jupyter (laptop) hoặc Google Colab (upload file `.ipynb`)
-- `ipywidgets` chỉ cho vài slider tùy chọn
+Xem [thiết kế chi tiết](docs/UWB_DESIGN.md) và [kết quả](reports/RESULTS.md).
 
-Chấm tự động cần thêm `nbformat`, `nbclient`, và một kernel Jupyter tên `python3`.
+![So sánh UWB mô phỏng](reports/uwb_comparison.png)
 
-```bash
-pip install numpy matplotlib scipy jupyter ipywidgets nbformat nbclient
-```
+## Notebook và tái lập
 
-## Học viên
-
-1. Mở `Lab/kalman_fusion_lab_STUDENT.ipynb`.
-2. Chạy các cell từ trên xuống. Sau mỗi bài tập, chạy ô kiểm tra — dòng `✅ Exercise … passed` nghĩa là bài đó đúng.
-3. Phần 1–4 đã điền sẵn: chạy và đọc, không chấm.
-4. Tự viết bài **5.1, 5.2, 6.1, 7.1** (đang là `raise NotImplementedError`).
-5. Ở Phần 9, đổi `STUDENT_ID` thành mã số hoặc tên của bạn, rồi đọc NIS, khai báo chẩn đoán, chọn một cách sửa, và viết một báo cáo.
-6. Nộp file `.ipynb` đã chạy (có output).
-
-Để nguyên câu mẫu `nhap_ma_so_sinh_vien_hoac_ten_cua_ban` thì toàn bộ Phần 9 = 0. Chép nhãn chẩn đoán của người khác không khớp dữ liệu của bạn.
-
-### Lịch trong buổi (120 phút)
-
-| Phút | Phần | Việc |
-|--:|:--|:--|
-| 5 | 0. Thiết lập | Chạy một lần |
-| 25 | 1–3. Trung bình trượt → Kalman 1 chiều | Chạy code có sẵn, đọc nhận định. Không chấm |
-| 10 | 4. NIS | Thấy NIS ≈ 1. Dùng lại ở Phần 9. Không chấm |
-| 25 | 5. Kalman dạng ma trận | Tự code 5.1, 5.2 |
-| 12 | 6. Hợp nhất LiDAR + radar + camera | Tự code 6.1 |
-| 10 | 7. Outlier | Tự code 7.1 |
-| 25 | 9. Nhiệm vụ Lynx-07 | Chẩn đoán, sửa, viết báo cáo |
-| 8 | Đệm | Hỏi nếu kẹt |
-
-Phần 8 (EKF) và các thử thách sau giờ nằm ngoài 120 phút. Thưởng tối đa **+5**.
-
-## Thang điểm
-
-Tổng **100**, cộng thưởng tối đa **+5** tách riêng.
-
-**Tự code — 50 điểm** (đúng hết hoặc 0, không có điểm một phần):
-
-| Bài | Điều kiện | Điểm |
-|:--|:--|--:|
-| 5.1 | `✅ Exercise 5.1 passed` | 10 |
-| 5.2 | `✅ Exercise 5.2 passed` | 15 |
-| 6.1 | `✅ Exercise 6.1 passed` | 15 |
-| 7.1 | `✅ Exercise 7.1 passed` | 10 |
-
-**Phần 9 — 30 điểm tự động + 20 điểm báo cáo:**
-
-| Mục | Điều kiện | Điểm |
-|:--|:--|--:|
-| 9.1 | Đúng cảm biến và đúng loại lỗi | 15 |
-| 9.1 một phần | Đúng cảm biến, sai loại lỗi | 8 |
-| 9.2 NIS | Pooled mean NIS < 8 | 8 |
-| 9.2 Cách sửa | `FIX_SENSOR` đúng cảm biến và `FIX_METHOD` đúng (`bias`, `inflate_R`, hoặc `gate`) | 7 |
-| Báo cáo | Bằng chứng số, cách sửa, 1σ cuối, một hạn chế | 20 |
-
-`auto_subtotal` tối đa **80**. Điểm cuối = `auto_subtotal` + điểm báo cáo (≤ 20) + thưởng (≤ 5).
-
-## Giảng viên — chấm điểm
-
-Chi tiết nằm trong [`Lab/HUONG_DAN_CHAM_DIEM.md`](Lab/HUONG_DAN_CHAM_DIEM.md). Tóm tắt:
+Python 3.9+, NumPy, SciPy, Matplotlib. Mở notebook bằng Jupyter/Colab nếu muốn
+thao tác tương tác (`jupyter`, `ipywidgets` là tùy chọn), hoặc chạy:
 
 ```bash
-cd Lab
-
-# roster.txt: mỗi dòng một STUDENT_ID đúng chuỗi học viên khai trong notebook
-python3 instructor_answer_key.py roster.txt answer_key.csv
-
-# submissions/: các file .ipynb đã nộp
-python3 grade_lab.py submissions/ --key answer_key.csv --out gradesheet.csv --review-dir review/
+MPLCONFIGDIR=/tmp/uwb-mpl python scripts/run_notebook.py
+MPLCONFIGDIR=/tmp/uwb-mpl python scripts/benchmark_uwb.py
 ```
 
-`grade_lab.py` chạy từng notebook bằng kernel sạch. Bài tập chưa làm (`NotImplementedError`) dừng đúng chỗ đó; mọi bài trước điểm dừng vẫn được chấm. Script ghi:
-
-- `gradesheet.csv` — điểm tự động (tối đa 80) và cột thưởng 8.1
-- `review/<tên_file>_review.md` — một báo cáo để chấm tay 20 điểm (bốn mục, mỗi mục 5)
-
-Nếu một `STUDENT_ID` không có trong `answer_key.csv`, script vẫn tự tính đáp án tại chỗ. Giữ `answer_key.csv` riêng, không chia sẻ với lớp.
+Notebook dùng `STUDENT_ID="02939"` theo mã số người dùng cung cấp.
+Báo cáo cá nhân: [reports/LAB_02939.md](reports/LAB_02939.md).
+Khi đổi ID, đọc lại NIS/residual và sửa chẩn đoán Phần 9. Các file chấm bài
+của giảng viên được README cũ nhắc tới không có trong checkout này.
