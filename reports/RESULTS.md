@@ -29,7 +29,7 @@ Notebook hiện đã được cá nhân hóa cho **02939**; xem [báo cáo hiệ
 Các số Phần 9 ghi “demo” bên dưới là kết quả lịch sử với `uwb_demo`, không phải của 02939.
 
 - 11/11 unit test pass, gồm kiểm tra tính nhân quả và seed riêng 101/202/303.
-- Toàn bộ 60 cell code của notebook chạy thành công; các check bắt buộc và EKF đều pass.
+- Toàn bộ 61 cell code của notebook chạy thành công; các check bắt buộc và EKF đều pass.
 - Demo Phần 9: GPS mean/median NIS 32.55/1.61; UWB 3.24/1.46. Gate GPS cho pooled mean NIS sau chọn lọc 1.994, nhận 1311/1350 mẫu.
 - RMS độ bất định vị trí cuối của demo Phần 9: 0.457 m; bán kính đường tròn bao elip Gaussian 95%: 0.790 m. Không có reference công khai để khẳng định RMSE của nhiệm vụ này.
 - CLI đọc 600 mẫu example_uwb.csv, xuất 600 dòng có online/offline, nhận 517 mẫu; các mẫu còn lại được giữ với cờ missing/rejected.

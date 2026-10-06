@@ -56,3 +56,7 @@ Notebook dùng `STUDENT_ID="02939"` theo mã số người dùng cung cấp.
 Báo cáo cá nhân: [reports/LAB_02939.md](reports/LAB_02939.md).
 Khi đổi ID, đọc lại NIS/residual và sửa chẩn đoán Phần 9. Các file chấm bài
 của giảng viên được README cũ nhắc tới không có trong checkout này.
+
+## File nộp theo checklist
+
+[submission/kalman_fusion_lab_02939.ipynb](submission/kalman_fusion_lab_02939.ipynb): đã chạy 61 cell code, có output và dòng cuối `✅ Lab Lynx-07 Complete`. File tên cũ được đồng bộ để link đã chia sẻ vẫn hoạt động.
